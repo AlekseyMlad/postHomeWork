@@ -39,6 +39,11 @@ object WallService {
     private var posts = emptyArray<Post>()
     private var nextId = 1
 
+    fun clear() {
+        posts = emptyArray()
+        nextId = 1
+    }
+
     fun add(post: Post): Post {
         val newPost = post.copy(id = nextId)
         posts += newPost
@@ -55,6 +60,7 @@ object WallService {
         }
         return false
     }
+
 }
 
 fun main() {
@@ -83,4 +89,3 @@ fun main() {
 
 
 }
-
