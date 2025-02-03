@@ -7,7 +7,6 @@ import org.junit.Before
 
 class WallServiceTest {
 
-   
 
     val post1 = Post(
         ownerId = 123,
@@ -20,7 +19,7 @@ class WallServiceTest {
     val post2 = Post(ownerId = 789, text = "Второй пост", canPin = false)
     val addedPost1 = WallService.add(post1)
     val addedPost2 = WallService.add(post2)
-    
+
     @Before
     fun clearBeforeTest() {
         WallService.clear()
@@ -34,8 +33,6 @@ class WallServiceTest {
     }
 
 
-
-
     @Test
     fun testUpdate() {
         val result = WallService.update(post2)
@@ -43,17 +40,17 @@ class WallServiceTest {
     }
 
     val updatedPost1 = addedPost1.copy(text = "Обновленный первый пост", likes = Likes(count = 15))
-    val updatedPost2 = addedPost2.copy(id = 15, text = "Обновленный первый пост", likes = Likes(count = 15))
+    val updatedPost2 = addedPost2.copy(id = 15, text = "Обновленный второй пост", likes = Likes(count = 15))
 
     @Test
-    fun test2Update() {
+    fun testTrueUpdate() {
         WallService.add(post1)
-        val result = WallService.update(updatedPost1)
-        assertEquals(true, result)
+        val result = WallService.update(updatedPost1.copy(text = "Обновленный первый пост"))
+        assertTrue(result)
     }
 
     @Test
-    fun test3Update() {
+    fun testFalseUpdate() {
         WallService.add(post2)
         val result = WallService.update(updatedPost2)
         assertEquals(false, result)
