@@ -1,14 +1,17 @@
 package ru.netology
 
+import ru.netology.interfaces.Attachment
+import ru.netology.interfaces.*
+
 
 data class Post(
     val id: Int = 0,
     val ownerId: Int = 0,
     val fromId: Int = 0,
-    val createdBy: Int = 0,
+    val createdBy: Int? = null,
     val date: Int = 0,
     val text: String = "text",
-    val replyOwnerId: Int = 0,
+    val replyOwnerId: Int? = null,
     val replyPostId: Int = 0,
     val friendsOnly: Boolean = false,
     val canPin: Boolean = true,
@@ -18,7 +21,8 @@ data class Post(
     val markedAsAds: Boolean = false,
     val isFavorite: Boolean = false,
     val likes: Likes = Likes(),
-    val comments: Comments = Comments()
+    val comments: Comments = Comments(),
+    val attachments: List<Attachment> = emptyList()
 )
 
 data class Likes(
@@ -29,20 +33,56 @@ data class Likes(
 )
 
 data class Comments(
+    val id: Int = 0,
     val count: Int = 0,
     val canPost: Boolean = true,
     val groupsCanPost: Boolean = true
 )
+data class Comment(
+    val id: Int = 0,
+    val fromId: Int,
+    val date: Int,
+    val text: String
+)
+
+//Исключение
+class PostNotFoundException(message: String) : RuntimeException(message)
 
 
 object WallService {
     private var posts = emptyArray<Post>()
+    private var comments = emptyArray<Comment>()
     private var nextId = 1
+    private var nextCommentId = 1
+
 
     fun clear() {
         posts = emptyArray()
+        comments = emptyArray()
         nextId = 1
+        nextCommentId = 1
     }
+
+
+    fun createComment(postId: Int, comment: Comment): Comment {
+        var postExists = false
+        for (post in posts) {
+            if (post.id == postId) {
+                postExists = true
+                break
+            }
+        }
+
+        if (!postExists) {
+            throw PostNotFoundException("Post with id $postId not found")
+        }
+
+        val newComment = comment.copy(id = nextCommentId)
+        comments += newComment
+        nextCommentId++
+        return newComment
+    }
+
 
     fun add(post: Post): Post {
         val newPost = post.copy(id = nextId)
@@ -70,14 +110,52 @@ fun main() {
         fromId = 456,
         text = "Первый пост",
         likes = Likes(count = 10, userLikes = true),
-        comments = Comments(count = 5)
+        comments = Comments(count = 5),
     )
     val post2 = Post(ownerId = 789, text = "Второй пост", canPin = false)
+
+    val photo = Photo(
+        id = 1,
+        userId = 300,
+        text = "Photo",
+        date = 162623
+    )
+
+    val video = Video(
+        id = 1,
+        userId = 300,
+        text = "Video",
+        date = 1852788,
+    )
+
+    val audio = Audio(
+        id = 100,
+        userId = 200,
+        text = "Audio",
+        date = 25041953,
+        url = "audio.mp3"
+    )
+
+    val post3 = Post(
+        ownerId = 123,
+        fromId = 456,
+        text = "Первый пост с фото",
+        attachments = listOf(PhotoAttachment(photo)),
+    )
+
+
+    val post4 = Post(
+        ownerId = 789,
+        text = "Второй пост с видео и аудио",
+        attachments = listOf(VideoAttachment(video), AudioAttachment(audio))
+    )
 
 
     // Добавление постов
     val addedPost1 = WallService.add(post1)
     val addedPost2 = WallService.add(post2)
+    val addedPost3 = WallService.add(post3)
+    val addedPost4 = WallService.add(post4)
 
     println("Добавлен пост 1: $addedPost1")
     println("Добавлен пост 2: $addedPost2")
@@ -87,5 +165,22 @@ fun main() {
     val updateResult = WallService.update(updatedPost1)
     println("Обновление поста 1: $updateResult")
 
+    // Создание комментария к посту
+    try {
+        val comment1 = Comment(fromId = 789, date = 1678886400, text = "Первый комментарий")
+        val addedComment1 = WallService.createComment(addedPost1.id, comment1)
+        println("Added comment: $addedComment1")
+    } catch (e: PostNotFoundException) {
+        println("Error: ${e.message}")
+    }
+
+    // Попытка создать комментарий к несуществующему посту
+    try {
+        val comment2 = Comment(fromId = 1011, date = 1678887400, text = "Комментарий к несуществующему посту")
+        val addedComment2 = WallService.createComment(999, comment2)
+        println("Added comment: $addedComment2")
+    } catch (e: PostNotFoundException) {
+        println("Error: ${e.message}")
+    }
 
 }
