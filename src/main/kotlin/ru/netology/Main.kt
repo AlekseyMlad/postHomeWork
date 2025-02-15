@@ -33,20 +33,56 @@ data class Likes(
 )
 
 data class Comments(
+    val id: Int = 0,
     val count: Int = 0,
     val canPost: Boolean = true,
     val groupsCanPost: Boolean = true
 )
+data class Comment(
+    val id: Int = 0,
+    val fromId: Int,
+    val date: Int,
+    val text: String
+)
+
+//Исключение
+class PostNotFoundException(message: String) : RuntimeException(message)
 
 
 object WallService {
     private var posts = emptyArray<Post>()
+    private var comments = emptyArray<Comment>()
     private var nextId = 1
+    private var nextCommentId = 1
+
 
     fun clear() {
         posts = emptyArray()
+        comments = emptyArray()
         nextId = 1
+        nextCommentId = 1
     }
+
+
+    fun createComment(postId: Int, comment: Comment): Comment {
+        var postExists = false
+        for (post in posts) {
+            if (post.id == postId) {
+                postExists = true
+                break
+            }
+        }
+
+        if (!postExists) {
+            throw PostNotFoundException("Post with id $postId not found")
+        }
+
+        val newComment = comment.copy(id = nextCommentId)
+        comments += newComment
+        nextCommentId++
+        return newComment
+    }
+
 
     fun add(post: Post): Post {
         val newPost = post.copy(id = nextId)
@@ -129,5 +165,22 @@ fun main() {
     val updateResult = WallService.update(updatedPost1)
     println("Обновление поста 1: $updateResult")
 
+    // Создание комментария к посту
+    try {
+        val comment1 = Comment(fromId = 789, date = 1678886400, text = "Первый комментарий")
+        val addedComment1 = WallService.createComment(addedPost1.id, comment1)
+        println("Added comment: $addedComment1")
+    } catch (e: PostNotFoundException) {
+        println("Error: ${e.message}")
+    }
+
+    // Попытка создать комментарий к несуществующему посту
+    try {
+        val comment2 = Comment(fromId = 1011, date = 1678887400, text = "Комментарий к несуществующему посту")
+        val addedComment2 = WallService.createComment(999, comment2)
+        println("Added comment: $addedComment2")
+    } catch (e: PostNotFoundException) {
+        println("Error: ${e.message}")
+    }
 
 }
